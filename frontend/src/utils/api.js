@@ -27,6 +27,6 @@ export const chatApi = {
     client.get(`/chat/conversations/${conversationId}/messages`, { params: { page, limit } })
 };
 
-export const socketBaseUrl = (import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000').replace(/\/$/, '');
+export const SOCKET_BASE_URL = (import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000').replace(/\/$/, '');
 
 export default client;

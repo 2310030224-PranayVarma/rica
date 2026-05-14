@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import Sidebar from '../components/Sidebar';
 import ConversationView from '../components/ConversationView';
-import { chatApi, socketBaseUrl } from '../utils/api';
+import { chatApi, SOCKET_BASE_URL } from '../utils/api';
 
 function ChatPage({ user, token, onLogout }) {
   const [conversations, setConversations] = useState([]);
@@ -65,7 +65,7 @@ function ChatPage({ user, token, onLogout }) {
   useEffect(() => {
     if (!token) return undefined;
 
-    const socket = io(socketBaseUrl, {
+    const socket = io(SOCKET_BASE_URL, {
       auth: { token },
       transports: ['websocket']
     });
@@ -74,12 +74,12 @@ function ChatPage({ user, token, onLogout }) {
 
     socket.on('connect', () => {
       socket.emit('user_connected', {
-        lastReceivedAt: localStorage.getItem('last_received_at') || undefined
+        lastReceivedAt: localStorage.getItem('lastReceivedAt') || undefined
       });
     });
 
     socket.on('receive_message', (message) => {
-      localStorage.setItem('last_received_at', message.timestamp);
+      localStorage.setItem('lastReceivedAt', message.timestamp);
       if (String(message.conversationId) === String(currentConversationId)) {
         setMessages((prev) => [...prev, message]);
       }

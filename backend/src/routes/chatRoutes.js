@@ -6,18 +6,23 @@ const Message = require('../models/Message');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const HttpError = require('../utils/httpError');
+const { chatLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+router.use(chatLimiter);
 router.use(authMiddleware);
 
 router.get('/users', async (req, res, next) => {
   try {
     const q = (req.query.q || '').trim();
-    const filter = q
+    const safeQuery = escapeRegex(q).slice(0, 64);
+    const filter = safeQuery
       ? {
           _id: { $ne: req.user._id },
-          $or: [{ username: { $regex: q, $options: 'i' } }, { email: { $regex: q, $options: 'i' } }]
+          $or: [{ username: { $regex: safeQuery, $options: 'i' } }, { email: { $regex: safeQuery, $options: 'i' } }]
         }
       : { _id: { $ne: req.user._id } };
 
@@ -39,24 +44,25 @@ router.post(
       }
 
       const { receiverId } = req.body;
+      const receiverObjectId = new mongoose.Types.ObjectId(receiverId);
       if (receiverId === String(req.user._id)) {
         throw new HttpError(400, 'Cannot create direct chat with self');
       }
 
-      const receiverExists = await User.exists({ _id: receiverId });
+      const receiverExists = await User.exists({ _id: receiverObjectId });
       if (!receiverExists) {
         throw new HttpError(404, 'Receiver not found');
       }
 
       let conversation = await Conversation.findOne({
         type: 'direct',
-        members: { $all: [req.user._id, receiverId], $size: 2 }
+        members: { $all: [req.user._id, receiverObjectId], $size: 2 }
       });
 
       if (!conversation) {
         conversation = await Conversation.create({
           type: 'direct',
-          members: [req.user._id, receiverId],
+          members: [req.user._id, receiverObjectId],
           createdBy: req.user._id
         });
       }

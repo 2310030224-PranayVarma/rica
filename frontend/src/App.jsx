@@ -30,7 +30,7 @@ function App() {
       onLogout: () => {
         localStorage.removeItem('chat_token');
         localStorage.removeItem('chat_user');
-        localStorage.removeItem('last_received_at');
+        localStorage.removeItem('lastReceivedAt');
         setToken('');
         setUser(null);
       }

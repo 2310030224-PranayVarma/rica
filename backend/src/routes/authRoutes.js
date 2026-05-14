@@ -1,8 +1,11 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { login, register } = require('../controllers/authController');
+const { authLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+router.use(authLimiter);
 
 router.post(
   '/register',
